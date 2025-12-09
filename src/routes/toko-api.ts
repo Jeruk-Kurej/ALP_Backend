@@ -11,6 +11,6 @@ tokoRouter.get("/", TokoController.getAll)
 // Protected routes
 tokoRouter.use(authMiddleware)
 tokoRouter.post("/", TokoController.create)
-tokoRouter.get("/my/store", TokoController.getMyStore)
+tokoRouter.get("/my/stores", TokoController.getMyStores)
 tokoRouter.put("/:tokoId", TokoController.update)
 tokoRouter.delete("/:tokoId", TokoController.delete)

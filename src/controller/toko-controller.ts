@@ -93,19 +93,19 @@ export class TokoController {
         }
     }
 
-    static async getMyStore(req: UserRequest, res: Response, next: NextFunction) {
+    static async getMyStores(req: UserRequest, res: Response, next: NextFunction) {
         try {
             if (!req.user) {
                 throw new Error("Unauthorized");
             }
 
-            const response = await TokoService.getMyStore(req.user);
+            const response = await TokoService.getMyStores(req.user);
 
             res.status(200).json({
                 data: response,
             });
         } catch (error) {
             next(error);
-        }
-    }
+        }
+    }
 }

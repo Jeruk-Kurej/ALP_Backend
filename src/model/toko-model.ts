@@ -1,61 +1,62 @@
-import { Toko, User } from "../../generated/prisma/client"
+import { Toko } from "../../generated/prisma/client";
 
 export interface TokoResponse {
-    id: number
-    name: string
-    description: string | null
-    location: string | null
-    image: string | null
-    admin?: {
-        id: number
-        username: string
-        email: string
-    }
+    id: number;
+    name: string;
+    description: string | null;
+    location: string | null;
+    image: string | null;
+    is_open: boolean;
+    owner?: {
+        id: number;
+        username: string;
+        email: string;
+    };
 }
 
 export interface CreateTokoRequest {
-    name: string
-    description?: string
-    location?: string
-    image?: string
+    name: string;
+    description?: string;
+    location?: string;
+    image?: string;
 }
 
 export interface UpdateTokoRequest {
-    id: number
-    name: string
-    description?: string
-    location?: string
-    image?: string
+    id: number;
+    name: string;
+    description?: string;
+    location?: string;
+    image?: string;
 }
 
-// Tipe untuk toko dengan admin included
-type TokoWithAdmin = Toko & {
-    admin?: {
-        id: number
-        username: string
-        email: string
-    }
-}
+type TokoWithOwner = Toko & {
+    owner?: {
+        id: number;
+        username: string;
+        email: string;
+    };
+};
 
 export function toTokoResponse(
-    toko: TokoWithAdmin,
-    includeAdmin: boolean = false
+    toko: TokoWithOwner,
+    includeOwner: boolean = false
 ): TokoResponse {
     const response: TokoResponse = {
         id: toko.id,
         name: toko.name,
         description: toko.description,
         location: toko.location,
-        image: toko.image
+        image: toko.image,
+        is_open: toko.is_open,
+    };
+
+    if (includeOwner && toko.owner) {
+        response.owner = {
+            id: toko.owner.id,
+            username: toko.owner.username,
+            email: toko.owner.email,
+        };
     }
 
-    if (includeAdmin && toko.admin) {
-        response.admin = {
-            id: toko.admin.id,
-            username: toko.admin.username,
-            email: toko.admin.email,
-        }
-    }
-
-    return response
+    return response;
 }
