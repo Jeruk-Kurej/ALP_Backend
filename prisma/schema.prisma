@@ -17,14 +17,10 @@ model User {
   email     String  @unique @db.VarChar(150)
   password  String  @db.VarChar(255) 
   is_active Boolean @default(true)
-  
-  // Foreign Key 
-  toko_id   Int
 
-  // Relasi - Optional
-  toko      Toko?    @relation(fields: [toko_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  // Relasi 1:M - User bisa punya banyak toko
+  tokos     Toko[]
 
-  @@index([toko_id]) 
   @@map("user")
 }
 
@@ -36,11 +32,17 @@ model Toko {
   location    String? @db.Text
   image       String? @db.Text 
 
-  // Relasi 1:M
-  users        User[]
+  // Foreign Key - setiap toko punya 1 owner
+  owner_id    Int
+
+  // Relasi - Toko belongs to User (owner)
+  owner       User    @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // Relasi lain
   orders       Order[]
   tokoProducts TokoProduct[]
 
+  @@index([owner_id])
   @@map("toko")
 }
 
