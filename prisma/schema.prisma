@@ -19,7 +19,7 @@ model User {
   is_active Boolean @default(true)
   
   // Foreign Key 
-  toko_id   Int
+  toko_id   Int?
 
   // Relasi - Optional
   toko      Toko?    @relation(fields: [toko_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
