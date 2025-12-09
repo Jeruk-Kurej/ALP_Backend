@@ -1,4 +1,4 @@
-import { Toko, User } from "../../generated/prisma/client";
+import { Toko, User } from "../../generated/prisma/client"
 
 export interface TokoResponse {
     id: number
@@ -6,7 +6,6 @@ export interface TokoResponse {
     description: string | null
     location: string | null
     image: string | null
-
     admin?: {
         id: number
         username: string
@@ -29,8 +28,17 @@ export interface UpdateTokoRequest {
     image?: string
 }
 
+// Tipe untuk toko dengan admin included
+type TokoWithAdmin = Toko & {
+    admin?: {
+        id: number
+        username: string
+        email: string
+    }
+}
+
 export function toTokoResponse(
-    toko: Toko & { admin?: User },
+    toko: TokoWithAdmin,
     includeAdmin: boolean = false
 ): TokoResponse {
     const response: TokoResponse = {
@@ -38,8 +46,7 @@ export function toTokoResponse(
         name: toko.name,
         description: toko.description,
         location: toko.location,
-        image: toko.image,
-
+        image: toko.image
     }
 
     if (includeAdmin && toko.admin) {
@@ -50,5 +57,5 @@ export function toTokoResponse(
         }
     }
 
-    return response
+    return response
 }
