@@ -1,12 +1,10 @@
-import express from "express";
-import { CategoryController } from "../controller/category-controller";
-import { authMiddleware } from "../middleware/auth-middleware";
+import express from "express"
+import { CategoryController } from "../controller/category-controller"
 
-export const categoryRouter = express.Router();
+export const categoryRouter = express.Router()
 
-categoryRouter.use(authMiddleware);
-categoryRouter.post("/", CategoryController.create);
-categoryRouter.put("/:categoryId", CategoryController.update);
-categoryRouter.delete("/:categoryId", CategoryController.delete);
-categoryRouter.get("/:categoryId", CategoryController.get);
-categoryRouter.get("/", CategoryController.getAll);
+categoryRouter.post("/categories", CategoryController.create)
+categoryRouter.put("/categories/:categoryId", CategoryController.update)
+categoryRouter.delete("/categories/:categoryId", CategoryController.delete)
+categoryRouter.get("/categories/:categoryId", CategoryController.get)
+categoryRouter.get("/categories", CategoryController.getAll)
