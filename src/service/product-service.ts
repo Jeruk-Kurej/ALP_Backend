@@ -36,7 +36,7 @@ export class ProductService {
 
         // Verify category exists
         const category = await prismaClient.category.findUnique({
-            where: { id: validatedData.category_id },
+            where: { id: validatedData.categoryId },
         })
 
         if (!category) {
@@ -51,7 +51,7 @@ export class ProductService {
                 description: validatedData.description,
                 image: validatedData.image,
                 category: {
-                    connect: { id: validatedData.category_id },
+                    connect: { id: validatedData.categoryId },
                 },
                 tokoProducts: {
                     create: {
@@ -88,8 +88,8 @@ export class ProductService {
                         mode: "insensitive",
                     },
                 }),
-                ...(validatedData.category_id && {
-                    category_id: validatedData.category_id,
+                ...(validatedData.categoryId && {
+                    category_id: validatedData.categoryId,
                 }),
             },
             include: {
@@ -169,10 +169,10 @@ export class ProductService {
             )
         }
 
-        // Verify category if category_id is being updated
-        if (validatedData.category_id) {
+        // Verify category if categoryId is being updated
+        if (validatedData.categoryId) {
             const category = await prismaClient.category.findUnique({
-                where: { id: validatedData.category_id },
+                where: { id: validatedData.categoryId },
             })
 
             if (!category) {
@@ -192,9 +192,9 @@ export class ProductService {
                 ...(validatedData.image !== undefined && {
                     image: validatedData.image,
                 }),
-                ...(validatedData.category_id && {
+                ...(validatedData.categoryId && {
                     category: {
-                        connect: { id: validatedData.category_id },
+                        connect: { id: validatedData.categoryId },
                     },
                 }),
             },
