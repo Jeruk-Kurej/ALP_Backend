@@ -56,4 +56,23 @@ export class OrderController {
             next(error)
         }
     }
+
+    static async updateStatus(req: Request, res: Response, next: NextFunction) {
+        try {
+            const orderId = Number(req.params.id)
+            const request = {
+                status: req.body.status,
+            }
+
+            const response = await OrderService.updateStatus(orderId, request)
+
+            res.status(200).json({
+                code: 200,
+                status: "OK",
+                data: response,
+            })
+        } catch (error) {
+            next(error)
+        }
+    }
 }

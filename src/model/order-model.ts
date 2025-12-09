@@ -24,10 +24,15 @@ export interface OrderItemResponse {
     }
 }
 
+export interface UpdateOrderStatusRequest {
+    status: "pending" | "paid" | "completed" | "cancelled"
+}
+
 export interface OrderResponse {
     id: number
     customer_name: string
     create_date: Date
+    status: string  // ✅ ADD THIS
     toko_id: number
     payment_id: number
     toko: {
@@ -66,6 +71,7 @@ export function toOrderResponse(order: OrderWithRelations): OrderResponse {
         id: order.id,
         customer_name: order.customer_name,
         create_date: order.create_date,
+        status: order.status,  
         toko_id: order.toko_id,
         payment_id: order.payment_id,
         toko: {

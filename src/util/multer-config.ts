@@ -1,47 +1,40 @@
 import multer from "multer"
 import path from "path"
 import fs from "fs"
+import { v4 as uuidv4 } from "uuid"
 
-// Buat folder uploads jika belum ada
-const uploadsDir = path.join(process.cwd(), "public", "uploads")
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, "../../public/uploads")
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true })
 }
 
-// Konfigurasi storage
+// Configure storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadsDir)
     },
     filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`
+        // Generate unique filename: uuid + original extension
+        const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`
         cb(null, uniqueName)
     },
 })
 
-// Filter file - hanya gambar
-const fileFilter = (
-    req: Express.Request,
-    file: Express.Multer.File,
-    cb: multer.FileFilterCallback
-) => {
-    const allowedMimes = ["image/jpeg", "image/png", "image/jpg"]
-    const allowedExtensions = [".jpg", ".jpeg", ".png"]
+// File filter (only images)
+const fileFilter = (req: any, file: Express.Multer.File, cb: any) => {
+    const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
 
-    const ext = path.extname(file.originalname).toLowerCase()
-    const mime = file.mimetype
-
-    if (allowedMimes.includes(mime) && allowedExtensions.includes(ext)) {
+    if (allowedMimes.includes(file.mimetype)) {
         cb(null, true)
     } else {
-        cb(new Error("Only JPG, JPEG, and PNG files are allowed!"))
+        cb(new Error("Only image files are allowed (JPEG, PNG, GIF, WEBP)"), false)
     }
 }
 
-// Konfigurasi multer
 export const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
+    storage,
+    fileFilter,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB max
     },

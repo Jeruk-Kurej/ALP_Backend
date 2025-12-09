@@ -2,6 +2,7 @@ import { ResponseError } from "../error/response-error"
 import {
     CreateOrderRequest,
     OrderResponse,
+    UpdateOrderStatusRequest,
     toOrderResponse,
 } from "../model/order-model"
 import { prismaClient } from "../util/database-util"
@@ -174,5 +175,48 @@ export class OrderService {
         })
 
         return orders.map((order) => toOrderResponse(order))
+    }
+
+    static async updateStatus(
+        orderId: number,
+        request: UpdateOrderStatusRequest
+    ): Promise<OrderResponse> {
+        // Validate order exists
+        const order = await prismaClient.order.findUnique({
+            where: { id: orderId },
+        })
+
+        if (!order) {
+            throw new ResponseError(404, "Order not found!")
+        }
+
+        // Update status
+        const updatedOrder = await prismaClient.order.update({
+            where: { id: orderId },
+            data: {
+                status: request.status,
+            },
+            include: {
+                toko: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                payment: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                orderItems: {
+                    include: {
+                        product: true,
+                    },
+                },
+            },
+        })
+
+        return toOrderResponse(updatedOrder)
     }
 }

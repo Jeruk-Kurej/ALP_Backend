@@ -97,6 +97,7 @@ model Order {
   id            Int      @id @default(autoincrement())
   create_date   DateTime @default(now())
   customer_name String   @db.VarChar(150)
+  status        String   @default("pending") @db.VarChar(50) 
   
   // Foreign Keys
   toko_id       Int
