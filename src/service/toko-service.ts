@@ -20,6 +20,18 @@ export class TokoService {
             request
         );
 
+        // Check if user already has a store with the same name
+        const existingToko = await prismaClient.toko.findFirst({
+            where: {
+                owner_id: user.id,
+                name: createRequest.name,
+            },
+        });
+
+        if (existingToko) {
+            throw new ResponseError(400, "You already have a store with this name");
+        }
+
         const toko = await prismaClient.toko.create({
             data: {
                 name: createRequest.name,
