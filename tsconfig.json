@@ -1,0 +1,15 @@
+{
+  "include": ["src/**/*", "prisma/**/*"],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "commonjs",
+    "target": "es2018",
+    "lib": ["es2018"],
+    "types": ["node"],
+    
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
