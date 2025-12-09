@@ -15,8 +15,8 @@ app.use(cors())
 
 app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")))
 
-app.use(publicRouter)
-app.use(privateRouter)
+app.use("/api", publicRouter)
+app.use("/api", privateRouter)
 
 app.use(errorMiddleware)
 
