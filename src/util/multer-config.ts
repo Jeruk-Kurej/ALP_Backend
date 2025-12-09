@@ -14,7 +14,6 @@ const storage = multer.diskStorage({
         cb(null, uploadsDir)
     },
     filename: (req, file, cb) => {
-        // ✅ Rename file: timestamp + original extension
         const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`
         cb(null, uniqueName)
     },
