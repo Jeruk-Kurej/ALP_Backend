@@ -21,19 +21,22 @@ export class ProductService {
             request
         )
 
-        // Get user's toko_id
-        const userWithToko = await prismaClient.user.findUnique({
+        // Get user's tokos
+        const userWithTokos = await prismaClient.user.findUnique({
             where: { id: user.id },
-            select: { toko_id: true },
+            include: { tokos: true },
         })
 
-        if (!userWithToko || !userWithToko.toko_id) {
-            throw new ResponseError(403, "User is not associated with any toko!")
+        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
+            throw new ResponseError(403, "You don't have any store yet!")
         }
+
+        // Use the first toko (or you can add logic to select specific toko)
+        const tokoId = userWithTokos.tokos[0].id
 
         // Verify category exists
         const category = await prismaClient.category.findUnique({
-            where: { id: validatedData.category_id },
+            where: { id: validatedData.categoryId },
         })
 
         if (!category) {
@@ -48,11 +51,11 @@ export class ProductService {
                 description: validatedData.description,
                 image: validatedData.image,
                 category: {
-                    connect: { id: validatedData.category_id },
+                    connect: { id: validatedData.categoryId },
                 },
                 tokoProducts: {
                     create: {
-                        toko_id: userWithToko.toko_id,
+                        toko_id: tokoId,
                     },
                 },
             },
@@ -85,8 +88,8 @@ export class ProductService {
                         mode: "insensitive",
                     },
                 }),
-                ...(validatedData.category_id && {
-                    category_id: validatedData.category_id,
+                ...(validatedData.categoryId && {
+                    category_id: validatedData.categoryId,
                 }),
             },
             include: {
@@ -132,23 +135,28 @@ export class ProductService {
             request
         )
 
-        // Get user's toko_id
-        const userWithToko = await prismaClient.user.findUnique({
+        // Get user's tokos
+        const userWithTokos = await prismaClient.user.findUnique({
             where: { id: user.id },
-            select: { toko_id: true },
+            include: { tokos: true },
         })
 
-        if (!userWithToko || !userWithToko.toko_id) {
-            throw new ResponseError(403, "User is not associated with any toko!")
+        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
+            throw new ResponseError(403, "You don't have any store yet!")
         }
 
-        // Verify product exists and belongs to user's toko
+        // Get all toko IDs owned by user
+        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
+
+        // Verify product exists and belongs to one of user's tokos
         const existingProduct = await prismaClient.product.findFirst({
             where: {
                 id: productId,
                 tokoProducts: {
                     some: {
-                        toko_id: userWithToko.toko_id,
+                        toko_id: {
+                            in: userTokoIds,
+                        },
                     },
                 },
             },
@@ -157,14 +165,14 @@ export class ProductService {
         if (!existingProduct) {
             throw new ResponseError(
                 404,
-                "Product not found or does not belong to your toko!"
+                "Product not found or does not belong to your store!"
             )
         }
 
-        // Verify category if category_id is being updated
-        if (validatedData.category_id) {
+        // Verify category if categoryId is being updated
+        if (validatedData.categoryId) {
             const category = await prismaClient.category.findUnique({
-                where: { id: validatedData.category_id },
+                where: { id: validatedData.categoryId },
             })
 
             if (!category) {
@@ -184,9 +192,9 @@ export class ProductService {
                 ...(validatedData.image !== undefined && {
                     image: validatedData.image,
                 }),
-                ...(validatedData.category_id && {
+                ...(validatedData.categoryId && {
                     category: {
-                        connect: { id: validatedData.category_id },
+                        connect: { id: validatedData.categoryId },
                     },
                 }),
             },
@@ -207,23 +215,28 @@ export class ProductService {
         user: UserJWTPayload,
         productId: number
     ): Promise<void> {
-        // Get user's toko_id
-        const userWithToko = await prismaClient.user.findUnique({
+        // Get user's tokos
+        const userWithTokos = await prismaClient.user.findUnique({
             where: { id: user.id },
-            select: { toko_id: true },
+            include: { tokos: true },
         })
 
-        if (!userWithToko || !userWithToko.toko_id) {
-            throw new ResponseError(403, "User is not associated with any toko!")
+        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
+            throw new ResponseError(403, "You don't have any store yet!")
         }
 
-        // Verify product exists and belongs to user's toko
+        // Get all toko IDs owned by user
+        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
+
+        // Verify product exists and belongs to one of user's tokos
         const existingProduct = await prismaClient.product.findFirst({
             where: {
                 id: productId,
                 tokoProducts: {
                     some: {
-                        toko_id: userWithToko.toko_id,
+                        toko_id: {
+                            in: userTokoIds,
+                        },
                     },
                 },
             },
@@ -232,7 +245,7 @@ export class ProductService {
         if (!existingProduct) {
             throw new ResponseError(
                 404,
-                "Product not found or does not belong to your toko!"
+                "Product not found or does not belong to your store!"
             )
         }
 

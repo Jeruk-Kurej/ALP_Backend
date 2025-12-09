@@ -23,7 +23,7 @@ export class ProductController {
                 price: Number(req.body.price),
                 description: req.body.description,
                 image: req.body.image,
-                category_id: Number(req.body.category_id),
+                categoryId: Number(req.body.categoryId),  // Ubah dari category_id
             }
 
             const response = await ProductService.create(req.user, request)
@@ -42,8 +42,8 @@ export class ProductController {
         try {
             const request: SearchProductRequest = {
                 name: req.query.name as string,
-                category_id: req.query.category_id
-                    ? Number(req.query.category_id)
+                categoryId: req.query.categoryId  // Ubah dari category_id
+                    ? Number(req.query.categoryId)
                     : undefined,
             }
 
@@ -90,8 +90,8 @@ export class ProductController {
                 price: req.body.price ? Number(req.body.price) : undefined,
                 description: req.body.description,
                 image: req.body.image,
-                category_id: req.body.category_id
-                    ? Number(req.body.category_id)
+                categoryId: req.body.categoryId  // Ubah dari category_id
+                    ? Number(req.body.categoryId)
                     : undefined,
             }
 

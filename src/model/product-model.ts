@@ -1,9 +1,27 @@
+import { Product, Category, TokoProduct, Toko } from "../../generated/prisma/client"
+
+export interface ProductResponse {
+    id: number
+    name: string
+    price: number
+    description: string | null
+    image: string | null
+    category: {
+        id: number
+        name: string
+    }
+    tokos: {
+        id: number
+        name: string
+    }[]
+}
+
 export interface CreateProductRequest {
     name: string
     price: number
     description?: string
     image?: string
-    category_id: number
+    categoryId: number  // Ubah dari category_id
 }
 
 export interface UpdateProductRequest {
@@ -11,36 +29,35 @@ export interface UpdateProductRequest {
     price?: number
     description?: string
     image?: string
-    category_id?: number
+    categoryId?: number  // Ubah dari category_id
 }
 
 export interface SearchProductRequest {
     name?: string
-    category_id?: number
+    categoryId?: number  // Ubah dari category_id
 }
 
-export interface ProductResponse {
-    id: number
-    name: string
-    price: number
-    description?: string
-    image?: string
-    category_id: number
-    category_name: string
-    toko_id?: number
-    toko_name?: string
+type ProductWithRelations = Product & {
+    category: Category
+    tokoProducts: (TokoProduct & {
+        toko: Toko
+    })[]
 }
 
-export function toProductResponse(product: any): ProductResponse {
+export function toProductResponse(product: ProductWithRelations): ProductResponse {
     return {
         id: product.id,
         name: product.name,
-        price: Number(product.price),
+        price: product.price.toNumber(),
         description: product.description,
         image: product.image,
-        category_id: product.category_id,
-        category_name: product.category?.name || "",
-        toko_id: product.tokoProducts?.[0]?.toko_id,
-        toko_name: product.tokoProducts?.[0]?.toko?.name,
+        category: {
+            id: product.category.id,
+            name: product.category.name,
+        },
+        tokos: product.tokoProducts.map((tp) => ({
+            id: tp.toko.id,
+            name: tp.toko.name,
+        })),
     }
 }
