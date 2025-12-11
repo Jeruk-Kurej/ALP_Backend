@@ -147,6 +147,35 @@ export class OrderService {
         return toOrderResponse(order)
     }
 
+    static async getAll(): Promise<OrderResponse[]> {
+        const orders = await prismaClient.order.findMany({
+            include: {
+                toko: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                payment: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                orderItems: {
+                    include: {
+                        product: true,
+                    },
+                },
+            },
+            orderBy: {
+                create_date: "desc",
+            },
+        })
+
+        return orders.map((order) => toOrderResponse(order))
+    }
+
     static async getAllByToko(tokoId: number): Promise<OrderResponse[]> {
         const orders = await prismaClient.order.findMany({
             where: { toko_id: tokoId },

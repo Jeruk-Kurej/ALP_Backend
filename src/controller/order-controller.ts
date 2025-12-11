@@ -27,6 +27,20 @@ export class OrderController {
         }
     }
 
+    static async getAll(req: Request, res: Response, next: NextFunction) {
+        try {
+            const response = await OrderService.getAll()
+
+            res.status(200).json({
+                code: 200,
+                status: "OK",
+                data: response,
+            })
+        } catch (error) {
+            next(error)
+        }
+    }
+
     static async getById(req: Request, res: Response, next: NextFunction) {
         try {
             const orderId = Number(req.params.id)
