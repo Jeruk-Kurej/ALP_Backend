@@ -44,9 +44,7 @@ export class UserService {
         const validatedData = Validation.validate(UserValidation.LOGIN, request)
 
         const user = await prismaClient.user.findFirst({
-            where: {
-                email: validatedData.email,
-            },
+            where: { username: request.username },
         })
 
         if (!user) {

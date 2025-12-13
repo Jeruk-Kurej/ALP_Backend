@@ -4,26 +4,27 @@ export class UserValidation {
     static readonly REGISTER: ZodType = z.object({
         username: z
             .string({
-                error: "Username must be string!",
+                message: "Username must be string!",
             })
             .min(1, {
-                error: "Username can not be empty!",
+                message: "Username can not be empty!",
             })
             .max(150),
         email: z
+            .string()
             .email({
-                error: "Email format is invalid!",
+                message: "Email format is invalid!",
             })
             .min(1, {
-                error: "Email can not be empty!",
+                message: "Email can not be empty!",
             })
             .max(150),
         password: z
             .string({
-                error: "Password must be string!",
+                message: "Password must be string!",
             })
             .min(8, {
-                error: "Password must contain at least 8 characters!",
+                message: "Password must contain at least 8 characters!",
             })
             .regex(/[A-Z]/, {
                 message: "Password must contain at least one uppercase letter"
@@ -37,19 +38,19 @@ export class UserValidation {
     })
 
     static readonly LOGIN: ZodType = z.object({
-        email: z
-            .email({
-                error: "Email format is invalid!",
+        username: z
+            .string({
+                message: "Username must be string!",
             })
             .min(1, {
-                error: "Email can not be empty!",
+                message: "Username can not be empty!",
             }),
         password: z
             .string({
-                error: "Password must be string!",
+                message: "Password must be string!",
             })
             .min(1, {
-                error: "Password can not be empty!",
+                message: "Password can not be empty!",
             }),
     })
 }
