@@ -13,10 +13,11 @@ export class CategoryService {
   static async create(request: CreateCategoryRequest): Promise<CategoryResponse> {
     const createRequest = Validation.validate(CategoryValidation.CREATE, request);
 
-    // Check if category name already exists
+    // Check if category name already exists for this user
     const existingCategory = await prismaClient.category.findFirst({
       where: {
         name: createRequest.name,
+        owner_id: createRequest.owner_id,
       },
     });
 
@@ -45,10 +46,11 @@ export class CategoryService {
       throw new ResponseError(404, "Category not found");
     }
 
-    // Check if new name already exists (excluding current category)
+    // Check if new name already exists for this user (excluding current category)
     const existingCategory = await prismaClient.category.findFirst({
       where: {
         name: updateRequest.name,
+        owner_id: category.owner_id,
         id: {
           not: updateRequest.id,
         },
@@ -105,8 +107,11 @@ export class CategoryService {
     return toCategoryResponse(category);
   }
 
-  static async getAll(): Promise<CategoryResponse[]> {
+  static async getAll(userId: number): Promise<CategoryResponse[]> {
     const categories = await prismaClient.category.findMany({
+      where: {
+        owner_id: userId,
+      },
       orderBy: {
         name: "asc",
       },

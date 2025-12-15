@@ -34,13 +34,16 @@ export class ProductService {
         // Use the first toko (or you can add logic to select specific toko)
         const tokoId = userWithTokos.tokos[0].id
 
-        // Verify category exists
-        const category = await prismaClient.category.findUnique({
-            where: { id: validatedData.categoryId },
+        // Verify category exists and belongs to the user
+        const category = await prismaClient.category.findFirst({
+            where: { 
+                id: validatedData.categoryId,
+                owner_id: user.id,
+            },
         })
 
         if (!category) {
-            throw new ResponseError(404, "Category not found!")
+            throw new ResponseError(404, "Category not found or does not belong to you!")
         }
 
         // Create product with nested write to connect category and create TokoProduct
@@ -73,12 +76,25 @@ export class ProductService {
     }
 
     static async getAll(
+        user: UserJWTPayload,
         request: SearchProductRequest
     ): Promise<ProductResponse[]> {
         const validatedData = Validation.validate(
             ProductValidation.SEARCH,
             request
         )
+
+        // Get user's toko IDs
+        const userWithTokos = await prismaClient.user.findUnique({
+            where: { id: user.id },
+            include: { tokos: true },
+        })
+
+        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
+            return [] // Return empty if user has no tokos
+        }
+
+        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
 
         const products = await prismaClient.product.findMany({
             where: {
@@ -91,6 +107,14 @@ export class ProductService {
                 ...(validatedData.categoryId && {
                     category_id: validatedData.categoryId,
                 }),
+                // Filter by user's tokos
+                tokoProducts: {
+                    some: {
+                        toko_id: {
+                            in: userTokoIds,
+                        },
+                    },
+                },
             },
             include: {
                 category: true,
@@ -171,12 +195,15 @@ export class ProductService {
 
         // Verify category if categoryId is being updated
         if (validatedData.categoryId) {
-            const category = await prismaClient.category.findUnique({
-                where: { id: validatedData.categoryId },
+            const category = await prismaClient.category.findFirst({
+                where: { 
+                    id: validatedData.categoryId,
+                    owner_id: user.id,
+                },
             })
 
             if (!category) {
-                throw new ResponseError(404, "Category not found!")
+                throw new ResponseError(404, "Category not found or does not belong to you!")
             }
         }
 
