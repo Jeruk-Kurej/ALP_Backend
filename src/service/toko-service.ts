@@ -9,6 +9,8 @@ import {
 import { UserJWTPayload } from "../model/user-model";
 import { TokoValidation } from "../validation/toko-validation";
 import { Validation } from "../validation/validation";
+import * as fs from "fs";
+import * as path from "path";
 
 export class TokoService {
     static async create(
@@ -82,6 +84,24 @@ export class TokoService {
             );
         }
 
+        // If a new image is being uploaded, delete the old one
+        if (updateRequest.image && toko.image) {
+            const oldImagePath = path.join(
+                process.cwd(),
+                "public",
+                toko.image.replace(/^\//, "") // Remove leading slash if present
+            );
+
+            // Delete old image file if it exists
+            if (fs.existsSync(oldImagePath)) {
+                fs.unlink(oldImagePath, (err) => {
+                    if (err) {
+                        console.error("Error deleting old image:", err);
+                    }
+                });
+            }
+        }
+
         const updatedToko = await prismaClient.toko.update({
             where: {
                 id: updateRequest.id,
@@ -125,6 +145,9 @@ export class TokoService {
             );
         }
 
+        // Store image path before deletion
+        const imagePath = toko.image;
+
         const deletedToko = await prismaClient.toko.delete({
             where: {
                 id: tokoId,
@@ -139,6 +162,23 @@ export class TokoService {
                 },
             },
         });
+
+        // Delete the physical image file if it exists
+        if (imagePath) {
+            const absoluteImagePath = path.join(
+                process.cwd(),
+                "public",
+                imagePath.replace(/^\//, "") // Remove leading slash if present
+            );
+
+            if (fs.existsSync(absoluteImagePath)) {
+                fs.unlink(absoluteImagePath, (err) => {
+                    if (err) {
+                        console.error("Error deleting image file:", err);
+                    }
+                });
+            }
+        }
 
         return toTokoResponse(deletedToko, true);
     }
