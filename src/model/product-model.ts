@@ -9,7 +9,7 @@ export interface ProductResponse {
     category: {
         id: number
         name: string
-    }
+    } | null
     tokos: {
         id: number
         name: string
@@ -21,7 +21,7 @@ export interface CreateProductRequest {
     price: number
     description?: string
     image?: string
-    categoryId: number  // Ubah dari category_id
+    categoryId?: number
 }
 
 export interface UpdateProductRequest {
@@ -38,7 +38,7 @@ export interface SearchProductRequest {
 }
 
 type ProductWithRelations = Product & {
-    category: Category
+    category: Category | null
     tokoProducts: (TokoProduct & {
         toko: Toko
     })[]
@@ -51,10 +51,10 @@ export function toProductResponse(product: ProductWithRelations): ProductRespons
         price: product.price.toNumber(),
         description: product.description,
         image: product.image,
-        category: {
+        category: product.category ? {
             id: product.category.id,
             name: product.category.name,
-        },
+        } : null,
         tokos: product.tokoProducts.map((tp) => ({
             id: tp.toko.id,
             name: tp.toko.name,

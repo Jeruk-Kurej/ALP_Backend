@@ -42,9 +42,9 @@ model Product {
   description  String?
   price        Decimal       @db.Decimal(12, 2)
   image        String?
-  category_id  Int
+  category_id  Int?
   orderItems   OrderItem[]
-  category     Category      @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  category     Category?     @relation(fields: [category_id], references: [id], onDelete: SetNull)
   tokoProducts TokoProduct[]
 
   @@index([category_id])

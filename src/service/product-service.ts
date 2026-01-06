@@ -21,43 +21,29 @@ export class ProductService {
             request
         )
 
-        // Get user's tokos
-        const userWithTokos = await prismaClient.user.findUnique({
-            where: { id: user.id },
-            include: { tokos: true },
-        })
+        // Verify category exists if provided
+        if (validatedData.categoryId) {
+            const category = await prismaClient.category.findUnique({
+                where: { id: validatedData.categoryId },
+            })
 
-        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
-            throw new ResponseError(403, "You don't have any store yet!")
+            if (!category) {
+                throw new ResponseError(404, "Category not found!")
+            }
         }
 
-        // Use the first toko (or you can add logic to select specific toko)
-        const tokoId = userWithTokos.tokos[0].id
-
-        // Verify category exists
-        const category = await prismaClient.category.findUnique({
-            where: { id: validatedData.categoryId },
-        })
-
-        if (!category) {
-            throw new ResponseError(404, "Category not found!")
-        }
-
-        // Create product with nested write to connect category and create TokoProduct
+        // Create product without auto-assigning toko
         const product = await prismaClient.product.create({
             data: {
                 name: validatedData.name,
                 price: validatedData.price,
                 description: validatedData.description,
                 image: validatedData.image,
-                category: {
-                    connect: { id: validatedData.categoryId },
-                },
-                tokoProducts: {
-                    create: {
-                        toko_id: tokoId,
+                ...(validatedData.categoryId && {
+                    category: {
+                        connect: { id: validatedData.categoryId },
                     },
-                },
+                }),
             },
             include: {
                 category: true,

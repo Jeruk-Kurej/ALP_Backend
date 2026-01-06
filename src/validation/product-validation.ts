@@ -6,7 +6,7 @@ export class ProductValidation {
         price: z.number().positive(),
         description: z.string().max(500).optional(),
         image: z.string().max(255).optional(),
-        categoryId: z.number().positive(),  // Ubah dari category_id
+        categoryId: z.number().positive().optional(),
     })
 
     static readonly UPDATE: ZodType = z.object({
@@ -14,11 +14,11 @@ export class ProductValidation {
         price: z.number().positive().optional(),
         description: z.string().max(500).optional(),
         image: z.string().max(255).optional(),
-        categoryId: z.number().positive().optional(),  // Ubah dari category_id
+        categoryId: z.number().positive().optional(),
     })
 
     static readonly SEARCH: ZodType = z.object({
         name: z.string().optional(),
-        categoryId: z.number().positive().optional(),  // Ubah dari category_id
+        categoryId: z.number().positive().optional(),
     })
 }
