@@ -1,6 +1,52 @@
 import { NextFunction, Request, Response } from "express"
 import { ResponseError } from "../error/response-error"
 import multer from "multer"
+import path from "path"
+import fs from "fs"
+
+const uploadsDir = path.join(process.cwd(), "public", "uploads")
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true })
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadsDir)
+    },
+    filename: (req, file, cb) => {
+        const allowedExtensions: { [key: string]: string } = {
+            "image/jpeg": ".jpg",
+            "image/jpg": ".jpg",
+            "image/png": ".png",
+        }
+
+        const ext = allowedExtensions[file.mimetype] || ".jpg"
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`
+        cb(null, uniqueName)
+    },
+})
+
+const fileFilter = (
+    req: Express.Request,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback
+) => {
+    const allowedMimes = ["image/jpeg", "image/png", "image/jpg"]
+
+    if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true)
+    } else {
+        cb(new Error("Only JPG, JPEG, and PNG files are allowed!"))
+    }
+}
+
+export const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB max
+    },
+})
 
 export const errorMiddleware = (
     error: Error,
@@ -39,7 +85,7 @@ export const errorMiddleware = (
     }
 
     // Handle custom file filter errors
-    if (error instanceof Error && error.message.includes("Only image")) {
+    if (error instanceof Error && error.message.includes("Only JPG")) {
         return res.status(400).json({
             code: 400,
             status: "BAD_REQUEST",

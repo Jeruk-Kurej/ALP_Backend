@@ -27,7 +27,6 @@ export interface UpdateTokoRequest {
     description?: string;
     location?: string;
     image?: string;
-    productIds?: string[] | number[];
 }
 
 type TokoWithOwner = Toko & {

@@ -1,9 +1,9 @@
 import { Router } from "express"
 import { UploadController } from "../controller/upload-controller"
-import { uploadProduct } from "../util/multer-util"
+import { upload } from "../util/multer-config"
 
 const router = Router()
 
-router.post("/upload", uploadProduct.single("file"), UploadController.uploadFile)
+router.post("/upload",upload.single("file"), UploadController.uploadFile)
 
 export default router
