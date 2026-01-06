@@ -5,6 +5,7 @@ import { PORT } from "./util/env-util"
 import { publicRouter } from "./routes/public-api"
 import { privateRouter } from "./routes/private-api"
 import { errorMiddleware } from "./middleware/error-middleware"
+import { runSeeder } from "../prisma/seed"
 
 const app = express()
 
@@ -20,6 +21,18 @@ app.use("/api", privateRouter)
 
 app.use(errorMiddleware)
 
-app.listen(PORT || 3000, () => {
-    console.log(`Connected to port ${PORT}`)
-})
+async function startServer() {
+    try {
+        // Run seeder to ensure payment methods exist
+        await runSeeder()
+
+        app.listen(PORT || 3000, () => {
+            console.log(`Connected to port ${PORT}`)
+        })
+    } catch (error) {
+        console.error('Failed to start server:', error)
+        process.exit(1)
+    }
+}
+
+startServer()
