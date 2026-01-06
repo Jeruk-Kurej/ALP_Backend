@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.privateRouter = void 0;
+const express_1 = __importDefault(require("express"));
+const auth_middleware_1 = require("../middleware/auth-middleware");
+const upload_api_1 = __importDefault(require("./upload-api"));
+const product_api_1 = __importDefault(require("./product-api"));
+const category_api_1 = require("./category-api");
+const payment_api_1 = require("./payment-api");
+const toko_api_1 = require("./toko-api");
+const order_api_1 = require("./order-api");
+exports.privateRouter = express_1.default.Router();
+exports.privateRouter.use(auth_middleware_1.authMiddleware);
+exports.privateRouter.use(upload_api_1.default);
+exports.privateRouter.use(product_api_1.default);
+exports.privateRouter.use(category_api_1.categoryRouter);
+exports.privateRouter.use(payment_api_1.paymentRouter);
+exports.privateRouter.use(toko_api_1.tokoRouter);
+exports.privateRouter.use(order_api_1.orderRouter);
