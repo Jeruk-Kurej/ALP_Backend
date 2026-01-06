@@ -159,9 +159,9 @@ exports.OrderScalarFieldEnum = {
     id: 'id',
     create_date: 'create_date',
     customer_name: 'customer_name',
+    status: 'status',
     toko_id: 'toko_id',
-    payment_id: 'payment_id',
-    status: 'status'
+    payment_id: 'payment_id'
 };
 exports.PaymentScalarFieldEnum = {
     id: 'id',

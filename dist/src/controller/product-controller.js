@@ -10,7 +10,7 @@ class ProductController {
                 throw new response_error_1.ResponseError(401, "Unauthorized");
             }
             // Get image path from uploaded file
-            const imagePath = req.file ? `/uploads/${req.file.filename}` : undefined;
+            const imagePath = req.file ? `/uploads/products/${req.file.filename}` : undefined;
             const request = {
                 name: req.body.name,
                 price: Number(req.body.price),
@@ -35,7 +35,7 @@ class ProductController {
                 throw new response_error_1.ResponseError(401, "Unauthorized");
             }
             // Get image path from uploaded file (or keep existing)
-            const imagePath = req.file ? `/uploads/${req.file.filename}` : undefined;
+            const imagePath = req.file ? `/uploads/products/${req.file.filename}` : undefined;
             const productId = Number(req.params.id);
             const request = {
                 name: req.body.name,
@@ -76,8 +76,11 @@ class ProductController {
     }
     static async getById(req, res, next) {
         try {
+            if (!req.user) {
+                throw new response_error_1.ResponseError(401, "Unauthorized");
+            }
             const productId = Number(req.params.id);
-            const response = await product_service_1.ProductService.getById(productId);
+            const response = await product_service_1.ProductService.getById(req.user, productId);
             res.status(200).json({
                 code: 200,
                 status: "OK",
@@ -90,9 +93,6 @@ class ProductController {
     }
     static async getAll(req, res, next) {
         try {
-            if (!req.user) {
-                throw new response_error_1.ResponseError(401, "Unauthorized");
-            }
             if (!req.user) {
                 throw new response_error_1.ResponseError(401, "Unauthorized");
             }

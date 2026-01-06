@@ -40,7 +40,7 @@ class CategoryService {
         const existingCategory = await database_util_1.prismaClient.category.findFirst({
             where: {
                 name: updateRequest.name,
-                owner_id: ownerId,
+                owner_id: category.owner_id,
                 id: {
                     not: updateRequest.id,
                 },

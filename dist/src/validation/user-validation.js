@@ -7,9 +7,7 @@ class UserValidation {
 exports.UserValidation = UserValidation;
 UserValidation.REGISTER = zod_1.z.object({
     username: zod_1.z
-        .string({
-        message: "Username must be string!",
-    })
+        .string()
         .min(1, {
         message: "Username can not be empty!",
     })
@@ -24,9 +22,7 @@ UserValidation.REGISTER = zod_1.z.object({
     })
         .max(150),
     password: zod_1.z
-        .string({
-        message: "Password must be string!",
-    })
+        .string()
         .min(8, {
         message: "Password must contain at least 8 characters!",
     })
@@ -42,16 +38,12 @@ UserValidation.REGISTER = zod_1.z.object({
 });
 UserValidation.LOGIN = zod_1.z.object({
     username: zod_1.z
-        .string({
-        message: "Username must be string!",
-    })
+        .string()
         .min(1, {
         message: "Username can not be empty!",
     }),
     password: zod_1.z
-        .string({
-        message: "Password must be string!",
-    })
+        .string()
         .min(1, {
         message: "Password can not be empty!",
     }),

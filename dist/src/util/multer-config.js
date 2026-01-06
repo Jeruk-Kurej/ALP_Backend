@@ -26,12 +26,12 @@ const storage = multer_1.default.diskStorage({
 });
 // File filter (only images)
 const fileFilter = (req, file, cb) => {
-    const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    const allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
     if (allowedMimes.includes(file.mimetype)) {
         cb(null, true);
     }
     else {
-        cb(new Error("Only image files are allowed (JPEG, PNG, GIF, WEBP)"), false);
+        cb(new Error(`Only image files are allowed. Server menerima tipe: ${file.mimetype}`), false);
     }
 };
 exports.upload = (0, multer_1.default)({
