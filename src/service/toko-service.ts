@@ -9,6 +9,7 @@ import {
 import { UserJWTPayload } from "../model/user-model";
 import { TokoValidation } from "../validation/toko-validation";
 import { Validation } from "../validation/validation";
+import { CloudinaryUtil } from "../util/cloudinary-util";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -171,7 +172,19 @@ export class TokoService {
             },
         });
 
-        if (imagePath) {
+        // Delete image from Cloudinary if exists
+        if (imagePath && imagePath.includes('cloudinary')) {
+            try {
+                const publicId = CloudinaryUtil.getPublicIdFromUrl(imagePath);
+                if (publicId) {
+                    await CloudinaryUtil.deleteImage(publicId);
+                    console.log(`✅ Deleted image from Cloudinary: ${publicId}`);
+                }
+            } catch (error) {
+                console.error('❌ Failed to delete image from Cloudinary:', error);
+            }
+        } else if (imagePath) {
+            // Fallback: delete from local filesystem if it's a local path
             const absoluteImagePath = path.join(process.cwd(), "public", imagePath.replace(/^\//, ""));
             if (fs.existsSync(absoluteImagePath)) {
                 fs.unlink(absoluteImagePath, (err) => { if (err) console.error(err); });

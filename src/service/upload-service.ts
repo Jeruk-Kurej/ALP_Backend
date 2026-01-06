@@ -16,7 +16,8 @@ export class UploadService {
             throw new ResponseError(400, "No file provided!")
         }
 
-        const url = `${baseUrl}/uploads/${file.filename}`
+        // For Cloudinary, the path contains the full URL
+        const url = file.path || `${baseUrl}/uploads/${file.filename}`
 
         return {
             filename: file.filename,

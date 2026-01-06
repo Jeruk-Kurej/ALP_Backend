@@ -1,6 +1,7 @@
 import multer from "multer"
 import path from "path"
 import fs from "fs"
+import { CloudinaryUtil } from "./cloudinary-util"
 
 /**
  * Helper function to ensure directory exists
@@ -41,6 +42,38 @@ const createStorage = (uploadFolder: string): multer.StorageEngine => {
 }
 
 /**
+ * Create Cloudinary storage for specific folder
+ * @param folder - Cloudinary folder name (e.g., 'tokos', 'products')
+ */
+class CloudinaryStorage {
+    constructor(private cloudinaryFolder: string) {}
+
+    _handleFile(req: any, file: Express.Multer.File, cb: (error?: any, info?: Partial<Express.Multer.File>) => void) {
+        // Convert file buffer to Cloudinary upload
+        CloudinaryUtil.uploadImage(file.buffer, `alp_backend/${this.cloudinaryFolder}`)
+            .then((result) => {
+                // Return multer file info with Cloudinary URL
+                const fileInfo: Partial<Express.Multer.File> = {
+                    filename: result.public_id,
+                    path: result.secure_url,
+                    size: result.bytes,
+                    mimetype: `image/${result.format}`,
+                    originalname: file.originalname,
+                }
+                cb(null, fileInfo)
+            })
+            .catch((error) => {
+                cb(error)
+            })
+    }
+
+    _removeFile(req: any, file: Express.Multer.File, cb: (error: Error | null) => void) {
+        // Optional: implement file removal if needed
+        cb(null)
+    }
+}
+
+/**
  * File filter to accept only images
  */
 const imageFileFilter = (
@@ -68,11 +101,11 @@ const imageFileFilter = (
 }
 
 /**
- * Upload configuration for Toko images
- * Stores files in: public/uploads/tokos/
+ * Upload configuration for Toko images using Cloudinary
+ * Stores files in: alp_backend/tokos/
  */
 export const uploadToko = multer({
-    storage: createStorage("uploads/tokos"),
+    storage: new CloudinaryStorage("tokos"),
     fileFilter: imageFileFilter,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB max
@@ -80,11 +113,11 @@ export const uploadToko = multer({
 })
 
 /**
- * Upload configuration for Product images
- * Stores files in: public/uploads/products/
+ * Upload configuration for Product images using Cloudinary
+ * Stores files in: alp_backend/products/
  */
 export const uploadProduct = multer({
-    storage: createStorage("uploads/products"),
+    storage: new CloudinaryStorage("products"),
     fileFilter: imageFileFilter,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB max
