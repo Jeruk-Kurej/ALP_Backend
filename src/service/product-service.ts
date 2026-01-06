@@ -25,13 +25,16 @@ export class ProductService {
         // Biarkan produk dibuat tanpa terikat toko dulu.
         // User akan assign produk lewat menu "Edit Toko".
 
-        // Verify category exists
-        const category = await prismaClient.category.findUnique({
-            where: { id: validatedData.categoryId },
+        // Verify category exists and belongs to the user
+        const category = await prismaClient.category.findFirst({
+            where: { 
+                id: validatedData.categoryId,
+                owner_id: user.id,
+            },
         })
 
         if (!category) {
-            throw new ResponseError(404, "Category not found!")
+            throw new ResponseError(404, "Category not found or does not belong to you!")
         }
 
         // Create product (Tanpa tokoProducts)
@@ -60,12 +63,25 @@ export class ProductService {
     }
 
     static async getAll(
+        user: UserJWTPayload,
         request: SearchProductRequest
     ): Promise<ProductResponse[]> {
         const validatedData = Validation.validate(
             ProductValidation.SEARCH,
             request
         )
+
+        // Get user's toko IDs
+        const userWithTokos = await prismaClient.user.findUnique({
+            where: { id: user.id },
+            include: { tokos: true },
+        })
+
+        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
+            return [] // Return empty if user has no tokos
+        }
+
+        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
 
         const products = await prismaClient.product.findMany({
             where: {
@@ -78,6 +94,14 @@ export class ProductService {
                 ...(validatedData.categoryId && {
                     category_id: validatedData.categoryId,
                 }),
+                // Filter by user's tokos
+                tokoProducts: {
+                    some: {
+                        toko_id: {
+                            in: userTokoIds,
+                        },
+                    },
+                },
             },
             include: {
                 category: true,
@@ -92,9 +116,31 @@ export class ProductService {
         return products.map((product) => toProductResponse(product))
     }
 
-    static async getById(productId: number): Promise<ProductResponse> {
-        const product = await prismaClient.product.findUnique({
-            where: { id: productId },
+    static async getById(user: UserJWTPayload, productId: number): Promise<ProductResponse> {
+        // Get user's toko IDs
+        const userWithTokos = await prismaClient.user.findUnique({
+            where: { id: user.id },
+            include: { tokos: true },
+        })
+
+        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
+            throw new ResponseError(403, "You don't have any store yet!")
+        }
+
+        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
+
+        const product = await prismaClient.product.findFirst({
+            where: { 
+                id: productId,
+                // Ensure product belongs to user's toko
+                tokoProducts: {
+                    some: {
+                        toko_id: {
+                            in: userTokoIds,
+                        },
+                    },
+                },
+            },
             include: {
                 category: true,
                 tokoProducts: {
@@ -106,7 +152,7 @@ export class ProductService {
         })
 
         if (!product) {
-            throw new ResponseError(404, "Product not found!")
+            throw new ResponseError(404, "Product not found or does not belong to your store!")
         }
 
         return toProductResponse(product)
@@ -135,29 +181,35 @@ export class ProductService {
         // Get all toko IDs owned by user
         const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
 
-        // Verify product exists 
-        // Note: Karena sekarang produk bisa tidak punya toko, logic ini mungkin perlu diperlonggar 
-        // jika kamu ingin user bisa edit produk yang belum assigned.
-        // TAPI untuk keamanan, sementara kita cek apakah user pemilik produk (via logic lain) 
-        // atau biarkan seperti ini jika asumsinya produk pasti assigned nanti.
-        // Untuk sekarang saya biarkan logic pengecekan ini, tapi idealnya dicek by owner product.
-        
-        const existingProduct = await prismaClient.product.findUnique({
-             where: { id: productId }
+        // Verify product exists and belongs to user's toko
+        const existingProduct = await prismaClient.product.findFirst({
+            where: { 
+                id: productId,
+                tokoProducts: {
+                    some: {
+                        toko_id: {
+                            in: userTokoIds,
+                        },
+                    },
+                },
+            }
         })
 
         if (!existingProduct) {
-             throw new ResponseError(404, "Product not found")
+            throw new ResponseError(404, "Product not found or does not belong to your store")
         }
 
         // Verify category if categoryId is being updated
         if (validatedData.categoryId) {
-            const category = await prismaClient.category.findUnique({
-                where: { id: validatedData.categoryId },
+            const category = await prismaClient.category.findFirst({
+                where: { 
+                    id: validatedData.categoryId,
+                    owner_id: user.id,
+                },
             })
 
             if (!category) {
-                throw new ResponseError(404, "Category not found!")
+                throw new ResponseError(404, "Category not found or does not belong to you!")
             }
         }
 
@@ -196,14 +248,34 @@ export class ProductService {
         user: UserJWTPayload,
         productId: number
     ): Promise<void> {
-        // Simple logic: delete if exists. 
-        // Idealnya cek ownership, tapi untuk mempersingkat saya gunakan delete langsung.
-        const existingProduct = await prismaClient.product.findUnique({
-            where: { id: productId }
+        // Get user's tokos
+        const userWithTokos = await prismaClient.user.findUnique({
+            where: { id: user.id },
+            include: { tokos: true },
+        })
+
+        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
+            throw new ResponseError(403, "You don't have any store yet!")
+        }
+
+        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
+
+        // Verify product exists and belongs to user's toko
+        const existingProduct = await prismaClient.product.findFirst({
+            where: { 
+                id: productId,
+                tokoProducts: {
+                    some: {
+                        toko_id: {
+                            in: userTokoIds,
+                        },
+                    },
+                },
+            }
         });
 
         if (!existingProduct) {
-            throw new ResponseError(404, "Product not found!")
+            throw new ResponseError(404, "Product not found or does not belong to your store!")
         }
 
         await prismaClient.product.delete({
