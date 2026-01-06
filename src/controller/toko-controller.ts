@@ -11,13 +11,12 @@ export class TokoController {
                 throw new ResponseError(401, "Unauthorized")
             }
 
-            // Get image path from uploaded file
-            const imagePath = req.file ? `/uploads/${req.file.filename}` : undefined
+            const imagePath = req.file ? `/uploads/tokos/${req.file.filename}` : undefined
 
             const request: CreateTokoRequest = {
                 name: req.body.name,
                 description: req.body.description,
-                location: req.body.location,
+                location: req.body.location, // Pastikan Android kirim key "location"
                 image: imagePath, 
             }
 
@@ -39,15 +38,30 @@ export class TokoController {
                 throw new ResponseError(401, "Unauthorized")
             }
 
-            // Get image path from uploaded file (or keep existing)
-            const imagePath = req.file ? `/uploads/${req.file.filename}` : undefined
+            const imagePath = req.file ? `/uploads/tokos/${req.file.filename}` : undefined
+            
+            // ✅ PERBAIKAN: Tangkap productIds
+            // Multer kadang membaca array sebagai string jika cuma 1 item, atau array jika banyak
+            let productIds: string[] = [];
+            
+            if (req.body.productIds) {
+                if (Array.isArray(req.body.productIds)) {
+                    productIds = req.body.productIds;
+                } else {
+                    // Jika cuma satu (string), bungkus jadi array
+                    productIds = [req.body.productIds];
+                }
+            }
 
+            // Kita perlu casting 'any' sebentar atau update interface UpdateTokoRequest nanti
+            // Asumsi: interface UpdateTokoRequest punya field optional 'productIds?: string[]'
             const request: UpdateTokoRequest = {
                 id: Number(req.params.tokoId),
                 name: req.body.name,
                 description: req.body.description,
                 location: req.body.location,
-                image: imagePath, 
+                image: imagePath,
+                productIds: productIds // ✅ Kirim list ID produk ke service
             }
 
             const response = await TokoService.update(req.user, request)
