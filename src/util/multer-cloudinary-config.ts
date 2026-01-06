@@ -3,11 +3,22 @@ import { CloudinaryUtil } from "./cloudinary-util"
 
 // Custom storage engine for Cloudinary
 class CloudinaryStorage {
+    constructor(private cloudinaryFolder: string) {}
+
     _handleFile(req: any, file: Express.Multer.File, cb: (error?: any, info?: Partial<Express.Multer.File>) => void) {
-        // Convert file buffer to Cloudinary upload
-        CloudinaryUtil.uploadImage(file.buffer, 'alp_backend')
+        // For Cloudinary, we need to handle the file stream
+        const uploadOptions = {
+            folder: `alp_backend/${this.cloudinaryFolder}`,
+            resource_type: 'image' as const,
+            transformation: [
+                { width: 800, height: 600, crop: 'limit' },
+                { quality: 'auto' },
+            ],
+        }
+
+        // Create upload stream
+        const uploadStream = CloudinaryUtil.uploadImageStream(uploadOptions)
             .then((result) => {
-                // Return multer file info with Cloudinary URL
                 const fileInfo: Partial<Express.Multer.File> = {
                     filename: result.public_id,
                     path: result.secure_url,
@@ -18,12 +29,19 @@ class CloudinaryStorage {
                 cb(null, fileInfo)
             })
             .catch((error) => {
+                console.error('Cloudinary upload error:', error)
                 cb(error)
             })
+
+        // Pipe file stream to Cloudinary
+        if (file.stream) {
+            file.stream.pipe(uploadStream as any)
+        } else {
+            cb(new Error('File stream not available'))
+        }
     }
 
     _removeFile(req: any, file: Express.Multer.File, cb: (error: Error | null) => void) {
-        // Optional: implement file removal if needed
         cb(null)
     }
 }
