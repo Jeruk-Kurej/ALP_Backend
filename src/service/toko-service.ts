@@ -150,6 +150,15 @@ export class TokoService {
         if (!toko) throw new ResponseError(404, "Store not found");
         if (toko.owner_id !== user.id) throw new ResponseError(403, "Unauthorized");
 
+        // ✅ Check if toko still has products assigned
+        const productsCount = await prismaClient.tokoProduct.count({
+            where: { toko_id: tokoId },
+        });
+
+        if (productsCount > 0) {
+            throw new ResponseError(400, `Cannot delete store because it still has ${productsCount} product(s) assigned to it. Please remove all products from this store first.`);
+        }
+
         const imagePath = toko.image;
 
         // Gunakan transaction untuk menghapus relasi dulu jika diperlukan

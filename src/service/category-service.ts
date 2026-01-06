@@ -86,6 +86,15 @@ export class CategoryService {
       throw new ResponseError(404, "Category not found or does not belong to you");
     }
 
+    // ✅ Check if category is still used by products
+    const productsCount = await prismaClient.product.count({
+      where: { category_id: categoryId },
+    });
+
+    if (productsCount > 0) {
+      throw new ResponseError(400, `Cannot delete category because it is still used by ${productsCount} product(s). Please reassign or delete all products using this category first.`);
+    }
+
     const deletedCategory = await prismaClient.category.delete({
       where: {
         id: categoryId,
