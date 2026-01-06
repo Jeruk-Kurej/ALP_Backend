@@ -73,6 +73,7 @@ export class ProductService {
     }
 
     static async getAll(
+        user: UserJWTPayload,
         request: SearchProductRequest
     ): Promise<ProductResponse[]> {
         const validatedData = Validation.validate(
@@ -80,6 +81,7 @@ export class ProductService {
             request
         )
 
+        // ✅ FIX: Filter by category owner instead of tokoProducts
         const products = await prismaClient.product.findMany({
             where: {
                 ...(validatedData.name && {
@@ -91,6 +93,10 @@ export class ProductService {
                 ...(validatedData.categoryId && {
                     category_id: validatedData.categoryId,
                 }),
+                // Filter by user's categories
+                category: {
+                    owner_id: user.id,
+                },
             },
             include: {
                 category: true,
@@ -106,28 +112,12 @@ export class ProductService {
     }
 
     static async getById(user: UserJWTPayload, productId: number): Promise<ProductResponse> {
-        // Get user's toko IDs
-        const userWithTokos = await prismaClient.user.findUnique({
-            where: { id: user.id },
-            include: { tokos: true },
-        })
-
-        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
-            throw new ResponseError(403, "You don't have any store yet!")
-        }
-
-        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
-
+        // ✅ FIX: Filter by category owner instead of tokoProducts
         const product = await prismaClient.product.findFirst({
             where: { 
                 id: productId,
-                // Ensure product belongs to user's toko
-                tokoProducts: {
-                    some: {
-                        toko_id: {
-                            in: userTokoIds,
-                        },
-                    },
+                category: {
+                    owner_id: user.id,
                 },
             },
             include: {
@@ -141,7 +131,7 @@ export class ProductService {
         })
 
         if (!product) {
-            throw new ResponseError(404, "Product not found or does not belong to your store!")
+            throw new ResponseError(404, "Product not found or does not belong to you!")
         }
 
         return toProductResponse(product)
@@ -157,35 +147,18 @@ export class ProductService {
             request
         )
 
-        // Get user's tokos
-        const userWithTokos = await prismaClient.user.findUnique({
-            where: { id: user.id },
-            include: { tokos: true },
-        })
-
-        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
-            throw new ResponseError(403, "You don't have any store yet!")
-        }
-
-        // Get all toko IDs owned by user
-        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
-
-        // Verify product exists and belongs to user's toko
+        // ✅ FIX: Verify product exists and belongs to user via category
         const existingProduct = await prismaClient.product.findFirst({
             where: { 
                 id: productId,
-                tokoProducts: {
-                    some: {
-                        toko_id: {
-                            in: userTokoIds,
-                        },
-                    },
+                category: {
+                    owner_id: user.id,
                 },
             }
         })
 
         if (!existingProduct) {
-            throw new ResponseError(404, "Product not found or does not belong to your store")
+            throw new ResponseError(404, "Product not found or does not belong to you")
         }
 
         // Verify category if categoryId is being updated
@@ -237,34 +210,18 @@ export class ProductService {
         user: UserJWTPayload,
         productId: number
     ): Promise<void> {
-        // Get user's tokos
-        const userWithTokos = await prismaClient.user.findUnique({
-            where: { id: user.id },
-            include: { tokos: true },
-        })
-
-        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
-            throw new ResponseError(403, "You don't have any store yet!")
-        }
-
-        const userTokoIds = userWithTokos.tokos.map((toko) => toko.id)
-
-        // Verify product exists and belongs to user's toko
+        // ✅ FIX: Verify product exists and belongs to user via category
         const existingProduct = await prismaClient.product.findFirst({
             where: { 
                 id: productId,
-                tokoProducts: {
-                    some: {
-                        toko_id: {
-                            in: userTokoIds,
-                        },
-                    },
+                category: {
+                    owner_id: user.id,
                 },
             }
         });
 
         if (!existingProduct) {
-            throw new ResponseError(404, "Product not found or does not belong to your store!")
+            throw new ResponseError(404, "Product not found or does not belong to you!")
         }
 
         await prismaClient.product.delete({
