@@ -13,10 +13,11 @@ export class CategoryService {
   static async create(request: CreateCategoryRequest): Promise<CategoryResponse> {
     const createRequest = Validation.validate(CategoryValidation.CREATE, request);
 
-    // Check if category name already exists
+    // Check if category name already exists for this user
     const existingCategory = await prismaClient.category.findFirst({
       where: {
         name: createRequest.name,
+        owner_id: createRequest.owner_id,
       },
     });
 
@@ -31,24 +32,26 @@ export class CategoryService {
     return toCategoryResponse(category);
   }
 
-  static async update(request: UpdateCategoryRequest): Promise<CategoryResponse> {
+  static async update(request: UpdateCategoryRequest, ownerId: number): Promise<CategoryResponse> {
     const updateRequest = Validation.validate(CategoryValidation.UPDATE, request);
 
-    // Check if category exists
-    const category = await prismaClient.category.findUnique({
+    // Check if category exists and belongs to the user
+    const category = await prismaClient.category.findFirst({
       where: {
         id: updateRequest.id,
+        owner_id: ownerId,
       },
     });
 
     if (!category) {
-      throw new ResponseError(404, "Category not found");
+      throw new ResponseError(404, "Category not found or does not belong to you");
     }
 
-    // Check if new name already exists (excluding current category)
+    // Check if new name already exists for this user (excluding current category)
     const existingCategory = await prismaClient.category.findFirst({
       where: {
         name: updateRequest.name,
+        owner_id: ownerId,
         id: {
           not: updateRequest.id,
         },
@@ -71,15 +74,16 @@ export class CategoryService {
     return toCategoryResponse(updatedCategory);
   }
 
-  static async delete(categoryId: number): Promise<CategoryResponse> {
-    const category = await prismaClient.category.findUnique({
+  static async delete(categoryId: number, ownerId: number): Promise<CategoryResponse> {
+    const category = await prismaClient.category.findFirst({
       where: {
         id: categoryId,
+        owner_id: ownerId,
       },
     });
 
     if (!category) {
-      throw new ResponseError(404, "Category not found");
+      throw new ResponseError(404, "Category not found or does not belong to you");
     }
 
     const deletedCategory = await prismaClient.category.delete({
@@ -91,22 +95,26 @@ export class CategoryService {
     return toCategoryResponse(deletedCategory);
   }
 
-  static async get(categoryId: number): Promise<CategoryResponse> {
-    const category = await prismaClient.category.findUnique({
+  static async get(categoryId: number, ownerId: number): Promise<CategoryResponse> {
+    const category = await prismaClient.category.findFirst({
       where: {
         id: categoryId,
+        owner_id: ownerId,
       },
     });
 
     if (!category) {
-      throw new ResponseError(404, "Category not found");
+      throw new ResponseError(404, "Category not found or does not belong to you");
     }
 
     return toCategoryResponse(category);
   }
 
-  static async getAll(): Promise<CategoryResponse[]> {
+  static async getAll(userId: number): Promise<CategoryResponse[]> {
     const categories = await prismaClient.category.findMany({
+      where: {
+        owner_id: userId,
+      },
       orderBy: {
         name: "asc",
       },

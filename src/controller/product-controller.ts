@@ -110,6 +110,12 @@ export class ProductController {
 
     static async getAll(req: UserRequest, res: Response, next: NextFunction) {
         try {
+            if (!req.user) {
+                throw new ResponseError(401, "Unauthorized")
+            }
+            if (!req.user) {
+                throw new ResponseError(401, "Unauthorized")
+            }
             const request: SearchProductRequest = {
                 name: req.query.name as string,
                 categoryId: req.query.categoryId
@@ -117,7 +123,7 @@ export class ProductController {
                     : undefined,
             }
 
-            const response = await ProductService.getAll(request)
+            const response = await ProductService.getAll(req.user, request)
 
             res.status(200).json({
                 code: 200,
