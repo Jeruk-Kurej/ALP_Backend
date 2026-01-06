@@ -1,5 +1,20 @@
 node_modules
 # Keep environment variables out of version control
 .env
+.env.local
+.env*.local
 
+# Build output
+dist
 /generated/prisma
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploaded files (optional - comment out if you want to keep them in git)
+public/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
