@@ -25,13 +25,21 @@ class CloudinaryStorage {
         let fileData: Buffer | NodeJS.ReadableStream
 
         if (file.buffer && file.buffer.length > 0) {
-            console.log('Using file buffer for upload')
+            console.log('Using file buffer for upload, size:', file.buffer.length)
             fileData = file.buffer
         } else if (file.stream) {
-            console.log('Using file stream for upload')
+            console.log('Using file stream for upload, readable:', file.stream.readable)
             fileData = file.stream
         } else {
-            console.error('Neither buffer nor stream available')
+            console.error('Neither buffer nor stream available - file details:', {
+                originalname: file.originalname,
+                mimetype: file.mimetype,
+                size: file.size,
+                hasBuffer: !!file.buffer,
+                bufferLength: file.buffer ? file.buffer.length : 0,
+                hasStream: !!file.stream,
+                streamReadable: file.stream ? (file.stream as any).readable : false
+            })
             return cb(new Error('Unable to access file content'))
         }
 

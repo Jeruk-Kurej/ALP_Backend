@@ -11,13 +11,14 @@ export class TokoController {
                 throw new ResponseError(401, "Unauthorized")
             }
 
-            const imagePath = req.file ? `/uploads/tokos/${req.file.filename}` : undefined
+            // Get image URL from Cloudinary upload
+            const imageUrl = req.file ? req.file.path : undefined
 
             const request: CreateTokoRequest = {
                 name: req.body.name,
                 description: req.body.description,
                 location: req.body.location, // Pastikan Android kirim key "location"
-                image: imagePath, 
+                image: imageUrl,
             }
 
             const response = await TokoService.create(req.user, request)
@@ -38,7 +39,8 @@ export class TokoController {
                 throw new ResponseError(401, "Unauthorized")
             }
 
-            const imagePath = req.file ? `/uploads/tokos/${req.file.filename}` : undefined
+            // Get image URL from Cloudinary upload (or keep existing)
+            const imageUrl = req.file ? req.file.path : undefined
             
             // ✅ PERBAIKAN: Tangkap productIds
             // Multer kadang membaca array sebagai string jika cuma 1 item, atau array jika banyak
@@ -60,7 +62,7 @@ export class TokoController {
                 name: req.body.name,
                 description: req.body.description,
                 location: req.body.location,
-                image: imagePath,
+                image: imageUrl, // ✅ Use Cloudinary URL
                 productIds: productIds // ✅ Kirim list ID produk ke service
             }
 

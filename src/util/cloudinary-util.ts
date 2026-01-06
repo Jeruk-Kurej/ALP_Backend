@@ -63,10 +63,15 @@ export class CloudinaryUtil {
 
                 // Handle both Buffer and ReadableStream
                 if (Buffer.isBuffer(fileData)) {
+                    console.log('Uploading buffer to Cloudinary, size:', fileData.length)
                     uploadStream.end(fileData)
-                } else {
-                    // It's a ReadableStream, pipe it
+                } else if (fileData && typeof fileData.pipe === 'function') {
+                    console.log('Piping stream to Cloudinary')
                     fileData.pipe(uploadStream)
+                } else {
+                    console.error('Invalid fileData type:', typeof fileData, 'hasPipe:', !!(fileData && typeof fileData.pipe === 'function'))
+                    reject(new Error('Invalid file data: must be Buffer or ReadableStream'))
+                    return
                 }
             })
 

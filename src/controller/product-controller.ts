@@ -17,6 +17,7 @@ export class ProductController {
 
             // Get image URL from Cloudinary upload
             const imageUrl = req.file ? req.file.path : undefined
+            console.log('Product create - Image URL received:', imageUrl)
 
             const request: CreateProductRequest = {
                 name: req.body.name,
@@ -25,6 +26,8 @@ export class ProductController {
                 image: imageUrl,
                 categoryId: Number(req.body.categoryId),
             }
+
+            console.log('Product create - Request data:', request)
 
             const response = await ProductService.create(req.user, request)
 
@@ -101,6 +104,7 @@ export class ProductController {
 
             const productId = Number(req.params.id)
             const response = await ProductService.getById(req.user, productId)
+            console.log('Product getById - Response data:', { id: response.id, name: response.name, image: response.image })
 
             res.status(200).json({
                 code: 200,
@@ -126,6 +130,7 @@ export class ProductController {
             }
 
             const response = await ProductService.getAll(req.user, request)
+            console.log('Product getAll - Response data:', response.map(p => ({ id: p.id, name: p.name, image: p.image })))
 
             res.status(200).json({
                 code: 200,
