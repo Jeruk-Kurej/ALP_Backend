@@ -21,29 +21,19 @@ export class ProductService {
             request
         )
 
-        // Get user's tokos
-        const userWithTokos = await prismaClient.user.findUnique({
-            where: { id: user.id },
-            include: { tokos: true },
-        })
-
-        if (!userWithTokos || !userWithTokos.tokos || userWithTokos.tokos.length === 0) {
-            throw new ResponseError(403, "You don't have any store yet!")
-        }
-
-        // Use the first toko (or you can add logic to select specific toko)
-        const tokoId = userWithTokos.tokos[0].id
-
-        // Verify category exists
-        const category = await prismaClient.category.findUnique({
-            where: { id: validatedData.categoryId },
+        // Verify category exists and belongs to the user
+        const category = await prismaClient.category.findFirst({
+            where: { 
+                id: validatedData.categoryId,
+                owner_id: user.id,
+            },
         })
 
         if (!category) {
-            throw new ResponseError(404, "Category not found!")
+            throw new ResponseError(404, "Category not found or does not belong to you!")
         }
 
-        // Create product with nested write to connect category and create TokoProduct
+        // Create product (without auto-assigning to toko)
         const product = await prismaClient.product.create({
             data: {
                 name: validatedData.name,
@@ -52,11 +42,6 @@ export class ProductService {
                 image: validatedData.image,
                 category: {
                     connect: { id: validatedData.categoryId },
-                },
-                tokoProducts: {
-                    create: {
-                        toko_id: tokoId,
-                    },
                 },
             },
             include: {
