@@ -16,7 +16,7 @@ export class ProductController {
             }
 
             // Get image path from uploaded file
-            const imagePath = req.file ? `/uploads/products/${req.file.filename}` : undefined
+            const imagePath = req.file ? `/uploads/${req.file.filename}` : undefined
 
             const request: CreateProductRequest = {
                 name: req.body.name,
@@ -45,7 +45,7 @@ export class ProductController {
             }
 
             // Get image path from uploaded file (or keep existing)
-            const imagePath = req.file ? `/uploads/products/${req.file.filename}` : undefined
+            const imagePath = req.file ? `/uploads/${req.file.filename}` : undefined
 
             const productId = Number(req.params.id)
             const request: UpdateProductRequest = {
