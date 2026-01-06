@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express"
 import { OrderService } from "../service/order-service"
 import { CreateOrderRequest } from "../model/order-model"
+import { UserRequest } from "../model/user-request-model"
 
 export class OrderController {
     static async create(req: Request, res: Response, next: NextFunction) {
@@ -27,9 +28,9 @@ export class OrderController {
         }
     }
 
-    static async getAll(req: Request, res: Response, next: NextFunction) {
+    static async getAll(req: UserRequest, res: Response, next: NextFunction) {
         try {
-            const response = await OrderService.getAll()
+            const response = await OrderService.getAll(req.user!.id)
 
             res.status(200).json({
                 code: 200,
@@ -41,10 +42,10 @@ export class OrderController {
         }
     }
 
-    static async getById(req: Request, res: Response, next: NextFunction) {
+    static async getById(req: UserRequest, res: Response, next: NextFunction) {
         try {
             const orderId = Number(req.params.id)
-            const response = await OrderService.getById(orderId)
+            const response = await OrderService.getById(req.user!.id, orderId)
 
             res.status(200).json({
                 code: 200,
@@ -56,10 +57,10 @@ export class OrderController {
         }
     }
 
-    static async getAllByToko(req: Request, res: Response, next: NextFunction) {
+    static async getAllByToko(req: UserRequest, res: Response, next: NextFunction) {
         try {
             const tokoId = Number(req.params.tokoId)
-            const response = await OrderService.getAllByToko(tokoId)
+            const response = await OrderService.getAllByToko(req.user!.id, tokoId)
 
             res.status(200).json({
                 code: 200,
@@ -71,14 +72,14 @@ export class OrderController {
         }
     }
 
-    static async updateStatus(req: Request, res: Response, next: NextFunction) {
+    static async updateStatus(req: UserRequest, res: Response, next: NextFunction) {
         try {
             const orderId = Number(req.params.id)
             const request = {
                 status: req.body.status,
             }
 
-            const response = await OrderService.updateStatus(orderId, request)
+            const response = await OrderService.updateStatus(req.user!.id, orderId, request)
 
             res.status(200).json({
                 code: 200,

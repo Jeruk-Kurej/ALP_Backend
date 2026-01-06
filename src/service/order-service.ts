@@ -116,9 +116,22 @@ export class OrderService {
         return toOrderResponse(order)
     }
 
-    static async getById(orderId: number): Promise<OrderResponse> {
-        const order = await prismaClient.order.findUnique({
-            where: { id: orderId },
+    static async getById(userId: number, orderId: number): Promise<OrderResponse> {
+        // Get user's tokos first
+        const userTokos = await prismaClient.toko.findMany({
+            where: { owner_id: userId },
+            select: { id: true },
+        })
+
+        const tokoIds = userTokos.map((toko) => toko.id)
+
+        const order = await prismaClient.order.findFirst({
+            where: {
+                id: orderId,
+                toko_id: {
+                    in: tokoIds,
+                },
+            },
             include: {
                 toko: {
                     select: {
@@ -141,14 +154,27 @@ export class OrderService {
         })
 
         if (!order) {
-            throw new ResponseError(404, "Order not found!")
+            throw new ResponseError(404, "Order not found or does not belong to you!")
         }
 
         return toOrderResponse(order)
     }
 
-    static async getAll(): Promise<OrderResponse[]> {
+    static async getAll(userId: number): Promise<OrderResponse[]> {
+        // Get all tokos owned by user
+        const userTokos = await prismaClient.toko.findMany({
+            where: { owner_id: userId },
+            select: { id: true },
+        })
+
+        const tokoIds = userTokos.map((toko) => toko.id)
+
         const orders = await prismaClient.order.findMany({
+            where: {
+                toko_id: {
+                    in: tokoIds,
+                },
+            },
             include: {
                 toko: {
                     select: {
@@ -176,7 +202,19 @@ export class OrderService {
         return orders.map((order) => toOrderResponse(order))
     }
 
-    static async getAllByToko(tokoId: number): Promise<OrderResponse[]> {
+    static async getAllByToko(userId: number, tokoId: number): Promise<OrderResponse[]> {
+        // Verify toko belongs to user
+        const toko = await prismaClient.toko.findFirst({
+            where: {
+                id: tokoId,
+                owner_id: userId,
+            },
+        })
+
+        if (!toko) {
+            throw new ResponseError(404, "Store not found or does not belong to you!")
+        }
+
         const orders = await prismaClient.order.findMany({
             where: { toko_id: tokoId },
             include: {
@@ -207,16 +245,30 @@ export class OrderService {
     }
 
     static async updateStatus(
+        userId: number,
         orderId: number,
         request: UpdateOrderStatusRequest
     ): Promise<OrderResponse> {
-        // Validate order exists
-        const order = await prismaClient.order.findUnique({
-            where: { id: orderId },
+        // Get user's tokos first
+        const userTokos = await prismaClient.toko.findMany({
+            where: { owner_id: userId },
+            select: { id: true },
+        })
+
+        const tokoIds = userTokos.map((toko) => toko.id)
+
+        // Validate order exists and belongs to user's toko
+        const order = await prismaClient.order.findFirst({
+            where: {
+                id: orderId,
+                toko_id: {
+                    in: tokoIds,
+                },
+            },
         })
 
         if (!order) {
-            throw new ResponseError(404, "Order not found!")
+            throw new ResponseError(404, "Order not found or does not belong to you!")
         }
 
         // Update status
