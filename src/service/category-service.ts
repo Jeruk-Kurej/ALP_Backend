@@ -32,18 +32,19 @@ export class CategoryService {
     return toCategoryResponse(category);
   }
 
-  static async update(request: UpdateCategoryRequest): Promise<CategoryResponse> {
+  static async update(request: UpdateCategoryRequest, ownerId: number): Promise<CategoryResponse> {
     const updateRequest = Validation.validate(CategoryValidation.UPDATE, request);
 
-    // Check if category exists
-    const category = await prismaClient.category.findUnique({
+    // Check if category exists and belongs to the user
+    const category = await prismaClient.category.findFirst({
       where: {
         id: updateRequest.id,
+        owner_id: ownerId,
       },
     });
 
     if (!category) {
-      throw new ResponseError(404, "Category not found");
+      throw new ResponseError(404, "Category not found or does not belong to you");
     }
 
     // Check if new name already exists for this user (excluding current category)
@@ -73,15 +74,16 @@ export class CategoryService {
     return toCategoryResponse(updatedCategory);
   }
 
-  static async delete(categoryId: number): Promise<CategoryResponse> {
-    const category = await prismaClient.category.findUnique({
+  static async delete(categoryId: number, ownerId: number): Promise<CategoryResponse> {
+    const category = await prismaClient.category.findFirst({
       where: {
         id: categoryId,
+        owner_id: ownerId,
       },
     });
 
     if (!category) {
-      throw new ResponseError(404, "Category not found");
+      throw new ResponseError(404, "Category not found or does not belong to you");
     }
 
     const deletedCategory = await prismaClient.category.delete({
@@ -93,15 +95,16 @@ export class CategoryService {
     return toCategoryResponse(deletedCategory);
   }
 
-  static async get(categoryId: number): Promise<CategoryResponse> {
-    const category = await prismaClient.category.findUnique({
+  static async get(categoryId: number, ownerId: number): Promise<CategoryResponse> {
+    const category = await prismaClient.category.findFirst({
       where: {
         id: categoryId,
+        owner_id: ownerId,
       },
     });
 
     if (!category) {
-      throw new ResponseError(404, "Category not found");
+      throw new ResponseError(404, "Category not found or does not belong to you");
     }
 
     return toCategoryResponse(category);

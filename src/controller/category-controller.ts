@@ -26,7 +26,7 @@ export class CategoryController {
         id: Number(req.params.categoryId),
         name: req.body.name,
       };
-      const response = await CategoryService.update(request);
+      const response = await CategoryService.update(request, req.user!.id);
       
       res.status(200).json({
         data: response,
@@ -39,7 +39,7 @@ export class CategoryController {
   static async delete(req: UserRequest, res: Response, next: NextFunction) {
     try {
       const categoryId = Number(req.params.categoryId);
-      const response = await CategoryService.delete(categoryId);
+      const response = await CategoryService.delete(categoryId, req.user!.id);
       
       res.status(200).json({
         data: response,
@@ -52,7 +52,7 @@ export class CategoryController {
   static async get(req: UserRequest, res: Response, next: NextFunction) {
     try {
       const categoryId = Number(req.params.categoryId);
-      const response = await CategoryService.get(categoryId);
+      const response = await CategoryService.get(categoryId, req.user!.id);
       
       res.status(200).json({
         data: response,

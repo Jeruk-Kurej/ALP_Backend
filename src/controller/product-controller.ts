@@ -95,8 +95,12 @@ export class ProductController {
 
     static async getById(req: UserRequest, res: Response, next: NextFunction) {
         try {
+            if (!req.user) {
+                throw new ResponseError(401, "Unauthorized")
+            }
+
             const productId = Number(req.params.id)
-            const response = await ProductService.getById(productId)
+            const response = await ProductService.getById(req.user, productId)
 
             res.status(200).json({
                 code: 200,
