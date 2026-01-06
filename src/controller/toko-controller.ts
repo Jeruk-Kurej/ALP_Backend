@@ -13,6 +13,7 @@ export class TokoController {
 
             // Get image URL from Cloudinary upload
             const imageUrl = req.file ? req.file.path : undefined
+            console.log('Toko create - Image URL received:', imageUrl)
 
             const request: CreateTokoRequest = {
                 name: req.body.name,
@@ -20,6 +21,8 @@ export class TokoController {
                 location: req.body.location, // Pastikan Android kirim key "location"
                 image: imageUrl,
             }
+
+            console.log('Toko create - Request data:', request)
 
             const response = await TokoService.create(req.user, request)
 
@@ -101,6 +104,7 @@ export class TokoController {
         try {
             const tokoId = Number(req.params.tokoId)
             const response = await TokoService.get(tokoId)
+            console.log('Toko get - Response data:', { id: response.id, name: response.name, image: response.image })
 
             res.status(200).json({
                 code: 200,
@@ -115,6 +119,7 @@ export class TokoController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
         try {
             const response = await TokoService.getAll()
+            console.log('Toko getAll - Response data:', response.map(t => ({ id: t.id, name: t.name, image: t.image })))
 
             res.status(200).json({
                 code: 200,

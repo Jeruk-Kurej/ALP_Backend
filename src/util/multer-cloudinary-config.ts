@@ -86,3 +86,11 @@ export const cloudinaryUpload = multer({
         fileSize: 5 * 1024 * 1024, // 5MB max
     },
 })
+
+export const cloudinaryUploadToko = multer({
+    storage: new CloudinaryStorage('tokos'),
+    fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB max
+    },
+})
