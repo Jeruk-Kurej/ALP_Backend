@@ -3,7 +3,9 @@ import { z, ZodType } from "zod"
 export class UserValidation {
     static readonly REGISTER: ZodType = z.object({
         username: z
-            .string()
+            .string({
+                message: "Username must be string!",
+            })
             .min(1, {
                 message: "Username can not be empty!",
             })
@@ -18,7 +20,9 @@ export class UserValidation {
             })
             .max(150),
         password: z
-            .string()
+            .string({
+                message: "Password must be string!",
+            })
             .min(8, {
                 message: "Password must contain at least 8 characters!",
             })
@@ -35,12 +39,16 @@ export class UserValidation {
 
     static readonly LOGIN: ZodType = z.object({
         username: z
-            .string()
+            .string({
+                message: "Username must be string!",
+            })
             .min(1, {
                 message: "Username can not be empty!",
             }),
         password: z
-            .string()
+            .string({
+                message: "Password must be string!",
+            })
             .min(1, {
                 message: "Password can not be empty!",
             }),

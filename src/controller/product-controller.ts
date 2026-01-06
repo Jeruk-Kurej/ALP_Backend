@@ -95,12 +95,8 @@ export class ProductController {
 
     static async getById(req: UserRequest, res: Response, next: NextFunction) {
         try {
-            if (!req.user) {
-                throw new ResponseError(401, "Unauthorized")
-            }
-
             const productId = Number(req.params.id)
-            const response = await ProductService.getById(req.user, productId)
+            const response = await ProductService.getById(productId)
 
             res.status(200).json({
                 code: 200,
@@ -114,10 +110,6 @@ export class ProductController {
 
     static async getAll(req: UserRequest, res: Response, next: NextFunction) {
         try {
-            if (!req.user) {
-                throw new ResponseError(401, "Unauthorized")
-            }
-
             const request: SearchProductRequest = {
                 name: req.query.name as string,
                 categoryId: req.query.categoryId
@@ -125,7 +117,7 @@ export class ProductController {
                     : undefined,
             }
 
-            const response = await ProductService.getAll(req.user, request)
+            const response = await ProductService.getAll(request)
 
             res.status(200).json({
                 code: 200,

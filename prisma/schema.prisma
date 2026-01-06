@@ -19,8 +19,7 @@ model User {
   is_active Boolean @default(true)
 
   // Relasi 1:M - User bisa punya banyak toko
-  tokos      Toko[]
-  categories Category[]
+  tokos     Toko[]
 
   @@map("user")
 }
@@ -70,17 +69,11 @@ model Product {
 
 model Category {
   id       Int       @id @default(autoincrement())
-  name     String    @db.VarChar(100)
-  
-  // Foreign Key - setiap category punya 1 owner
-  owner_id Int
+  name     String    @unique @db.VarChar(100)
   
   // Relasi
-  owner    User      @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   products Product[]
 
-  @@unique([name, owner_id])
-  @@index([owner_id])
   @@map("category")
 }
 
