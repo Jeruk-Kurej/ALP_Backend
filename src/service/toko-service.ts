@@ -22,7 +22,6 @@ export class TokoService {
             request
         );
 
-        // Check if user already has a store with the same name
         const existingToko = await prismaClient.toko.findFirst({
             where: {
                 owner_id: user.id,
@@ -65,62 +64,79 @@ export class TokoService {
             request
         );
 
-        // Check if toko exists
         const toko = await prismaClient.toko.findUnique({
-            where: {
-                id: updateRequest.id,
-            },
+            where: { id: updateRequest.id },
         });
 
         if (!toko) {
             throw new ResponseError(404, "Store not found");
         }
 
-        // Check if user is the owner
         if (toko.owner_id !== user.id) {
-            throw new ResponseError(
-                403,
-                "You are not authorized to update this store"
-            );
+            throw new ResponseError(403, "You are not authorized to update this store");
         }
 
-        // If a new image is being uploaded, delete the old one
+        // Hapus file gambar lama jika ada gambar baru
         if (updateRequest.image && toko.image) {
             const oldImagePath = path.join(
                 process.cwd(),
                 "public",
-                toko.image.replace(/^\//, "") // Remove leading slash if present
+                toko.image.replace(/^\//, "")
             );
-
-            // Delete old image file if it exists
             if (fs.existsSync(oldImagePath)) {
                 fs.unlink(oldImagePath, (err) => {
-                    if (err) {
-                        console.error("Error deleting old image:", err);
-                    }
+                    if (err) console.error("Error deleting old image:", err);
                 });
             }
         }
 
-        const updatedToko = await prismaClient.toko.update({
-            where: {
-                id: updateRequest.id,
-            },
-            data: {
-                name: updateRequest.name,
-                description: updateRequest.description,
-                location: updateRequest.location,
-                image: updateRequest.image,
-            },
-            include: {
-                owner: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
+        // ✅ PERBAIKAN: Gunakan Transaction untuk update data + update relasi produk
+        const updatedToko = await prismaClient.$transaction(async (prisma) => {
+            
+            // 1. Update data dasar toko
+            const result = await prisma.toko.update({
+                where: { id: updateRequest.id },
+                data: {
+                    name: updateRequest.name,
+                    description: updateRequest.description,
+                    location: updateRequest.location,
+                    image: updateRequest.image,
+                },
+                include: {
+                    owner: {
+                        select: {
+                            id: true,
+                            username: true,
+                            email: true,
+                        },
                     },
                 },
-            },
+            });
+
+            // 2. Logic Update Produk (Reset & Re-assign)
+            // Cek apakah 'productIds' ada di request (dikirim dari controller)
+            if (request.productIds) {
+                const productIds = request.productIds; // Array string atau number
+
+                // A. HAPUS SEMUA produk di toko ini dulu (Reset)
+                await prisma.tokoProduct.deleteMany({
+                    where: { toko_id: updateRequest.id }
+                });
+
+                // B. MASUKKAN yang baru dicentang
+                if (productIds.length > 0) {
+                    const dataToInsert = productIds.map((id) => ({
+                        toko_id: updateRequest.id,
+                        product_id: Number(id) // Convert string "5" to number 5
+                    }));
+
+                    await prisma.tokoProduct.createMany({
+                        data: dataToInsert
+                    });
+                }
+            }
+
+            return result;
         });
 
         return toTokoResponse(updatedToko, true);
@@ -128,55 +144,28 @@ export class TokoService {
 
     static async delete(user: UserJWTPayload, tokoId: number): Promise<TokoResponse> {
         const toko = await prismaClient.toko.findUnique({
-            where: {
-                id: tokoId,
-            },
+            where: { id: tokoId },
         });
 
-        if (!toko) {
-            throw new ResponseError(404, "Store not found");
-        }
+        if (!toko) throw new ResponseError(404, "Store not found");
+        if (toko.owner_id !== user.id) throw new ResponseError(403, "Unauthorized");
 
-        // Check if user is the owner
-        if (toko.owner_id !== user.id) {
-            throw new ResponseError(
-                403,
-                "You are not authorized to delete this store"
-            );
-        }
-
-        // Store image path before deletion
         const imagePath = toko.image;
 
+        // Gunakan transaction untuk menghapus relasi dulu jika diperlukan
+        // Tapi biasanya prisma menghapus cascade jika diatur di schema.
+        // Kita pakai delete biasa.
         const deletedToko = await prismaClient.toko.delete({
-            where: {
-                id: tokoId,
-            },
+            where: { id: tokoId },
             include: {
-                owner: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                    },
-                },
+                owner: { select: { id: true, username: true, email: true } },
             },
         });
 
-        // Delete the physical image file if it exists
         if (imagePath) {
-            const absoluteImagePath = path.join(
-                process.cwd(),
-                "public",
-                imagePath.replace(/^\//, "") // Remove leading slash if present
-            );
-
+            const absoluteImagePath = path.join(process.cwd(), "public", imagePath.replace(/^\//, ""));
             if (fs.existsSync(absoluteImagePath)) {
-                fs.unlink(absoluteImagePath, (err) => {
-                    if (err) {
-                        console.error("Error deleting image file:", err);
-                    }
-                });
+                fs.unlink(absoluteImagePath, (err) => { if (err) console.error(err); });
             }
         }
 
@@ -185,65 +174,34 @@ export class TokoService {
 
     static async get(tokoId: number): Promise<TokoResponse> {
         const toko = await prismaClient.toko.findUnique({
-            where: {
-                id: tokoId,
-            },
+            where: { id: tokoId },
             include: {
-                owner: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                    },
-                },
+                owner: { select: { id: true, username: true, email: true } },
             },
         });
 
-        if (!toko) {
-            throw new ResponseError(404, "Store not found");
-        }
-
+        if (!toko) throw new ResponseError(404, "Store not found");
         return toTokoResponse(toko, true);
     }
 
     static async getAll(): Promise<TokoResponse[]> {
         const tokos = await prismaClient.toko.findMany({
             include: {
-                owner: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                    },
-                },
+                owner: { select: { id: true, username: true, email: true } },
             },
-            orderBy: {
-                id: "desc",
-            },
+            orderBy: { id: "desc" },
         });
-
         return tokos.map((toko) => toTokoResponse(toko, true));
     }
 
     static async getMyStores(user: UserJWTPayload): Promise<TokoResponse[]> {
         const tokos = await prismaClient.toko.findMany({
-            where: {
-                owner_id: user.id,
-            },
+            where: { owner_id: user.id },
             include: {
-                owner: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                    },
-                },
+                owner: { select: { id: true, username: true, email: true } },
             },
-            orderBy: {
-                id: "desc",
-            },
+            orderBy: { id: "desc" },
         });
-
         return tokos.map((toko) => toTokoResponse(toko, true));
     }
 }
