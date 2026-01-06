@@ -31,7 +31,7 @@ export interface CloudinaryUploadResult {
 
 export class CloudinaryUtil {
     static async uploadImage(
-        fileBuffer: Buffer,
+        fileData: Buffer | NodeJS.ReadableStream,
         folder: string = 'alp_backend',
         publicId?: string
     ): Promise<CloudinaryUploadResult> {
@@ -47,7 +47,7 @@ export class CloudinaryUtil {
             }
 
             const result = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
-                cloudinary.uploader.upload_stream(
+                const uploadStream = cloudinary.uploader.upload_stream(
                     uploadOptions,
                     (error, result) => {
                         if (error) {
@@ -59,7 +59,15 @@ export class CloudinaryUtil {
                             reject(new Error('Upload failed: No result returned'))
                         }
                     }
-                ).end(fileBuffer)
+                )
+
+                // Handle both Buffer and ReadableStream
+                if (Buffer.isBuffer(fileData)) {
+                    uploadStream.end(fileData)
+                } else {
+                    // It's a ReadableStream, pipe it
+                    fileData.pipe(uploadStream)
+                }
             })
 
             return result

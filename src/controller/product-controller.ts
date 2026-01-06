@@ -15,14 +15,14 @@ export class ProductController {
                 throw new ResponseError(401, "Unauthorized")
             }
 
-            // Get image path from uploaded file
-            const imagePath = req.file ? `/uploads/products/${req.file.filename}` : undefined
+            // Get image URL from Cloudinary upload
+            const imageUrl = req.file ? req.file.path : undefined
 
             const request: CreateProductRequest = {
                 name: req.body.name,
                 price: Number(req.body.price),
                 description: req.body.description,
-                image: imagePath, 
+                image: imageUrl,
                 categoryId: Number(req.body.categoryId),
             }
 
@@ -44,15 +44,15 @@ export class ProductController {
                 throw new ResponseError(401, "Unauthorized")
             }
 
-            // Get image path from uploaded file (or keep existing)
-            const imagePath = req.file ? `/uploads/products/${req.file.filename}` : undefined
+            // Get image URL from Cloudinary upload (or keep existing)
+            const imageUrl = req.file ? req.file.path : undefined
 
             const productId = Number(req.params.id)
             const request: UpdateProductRequest = {
                 name: req.body.name,
                 price: req.body.price ? Number(req.body.price) : undefined,
                 description: req.body.description,
-                image: imagePath, // ✅ Use uploaded image path if provided
+                image: imageUrl, // ✅ Use uploaded image URL if provided
                 categoryId: req.body.categoryId
                     ? Number(req.body.categoryId)
                     : undefined,

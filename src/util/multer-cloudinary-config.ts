@@ -6,14 +6,39 @@ class CloudinaryStorage {
     constructor(private cloudinaryFolder: string) {}
 
     _handleFile(req: any, file: Express.Multer.File, cb: (error?: any, info?: Partial<Express.Multer.File>) => void) {
-        // Check if file buffer exists
-        if (!file.buffer || file.buffer.length === 0) {
-            return cb(new Error('Empty file or no file buffer provided'))
+        console.log('File received:', {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            hasBuffer: !!file.buffer,
+            bufferLength: file.buffer ? file.buffer.length : 0,
+            hasStream: !!file.stream
+        })
+
+        // Check if file has content
+        if (!file.buffer && !file.stream) {
+            console.error('No file buffer or stream available')
+            return cb(new Error('Empty file or no file content provided'))
+        }
+
+        // Use buffer if available, otherwise try to read from stream
+        let fileData: Buffer | NodeJS.ReadableStream
+
+        if (file.buffer && file.buffer.length > 0) {
+            console.log('Using file buffer for upload')
+            fileData = file.buffer
+        } else if (file.stream) {
+            console.log('Using file stream for upload')
+            fileData = file.stream
+        } else {
+            console.error('Neither buffer nor stream available')
+            return cb(new Error('Unable to access file content'))
         }
 
         // Upload to Cloudinary
-        CloudinaryUtil.uploadImage(file.buffer, `alp_backend/${this.cloudinaryFolder}`)
+        CloudinaryUtil.uploadImage(fileData, `alp_backend/${this.cloudinaryFolder}`)
             .then((result) => {
+                console.log('Cloudinary upload success:', result.secure_url)
                 // Return multer file info with Cloudinary URL
                 const fileInfo: Partial<Express.Multer.File> = {
                     filename: result.public_id,

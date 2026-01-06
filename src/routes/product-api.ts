@@ -1,11 +1,11 @@
 import { Router } from "express"
 import { ProductController } from "../controller/product-controller"
-import { uploadProduct } from "../util/multer-util"  
+import { cloudinaryUpload } from "../util/multer-cloudinary-config"
 
 const productRouter = Router()
 
-productRouter.post("/products", uploadProduct.single("image"), ProductController.create)
-productRouter.put("/products/:id", uploadProduct.single("image"), ProductController.update)
+productRouter.post("/products", cloudinaryUpload.single("image"), ProductController.create)
+productRouter.put("/products/:id", cloudinaryUpload.single("image"), ProductController.update)
 productRouter.delete("/products/:id", ProductController.delete)
 productRouter.get("/products/:id", ProductController.getById)
 productRouter.get("/products", ProductController.getAll)
