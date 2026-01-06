@@ -1,11 +1,15 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { CategoryService } from "../service/category-service";
 import { CreateCategoryRequest, UpdateCategoryRequest } from "../model/category-model";
+import { UserRequest } from "../model/user-request-model";
 
 export class CategoryController {
-  static async create(req: Request, res: Response, next: NextFunction) {
+  static async create(req: UserRequest, res: Response, next: NextFunction) {
     try {
-      const request: CreateCategoryRequest = req.body as CreateCategoryRequest;
+      const request: CreateCategoryRequest = {
+        name: req.body.name,
+        owner_id: req.user!.id,
+      };
       const response = await CategoryService.create(request);
       
       res.status(201).json({
@@ -16,13 +20,13 @@ export class CategoryController {
     }
   }
 
-  static async update(req: Request, res: Response, next: NextFunction) {
+  static async update(req: UserRequest, res: Response, next: NextFunction) {
     try {
       const request: UpdateCategoryRequest = {
         id: Number(req.params.categoryId),
         name: req.body.name,
       };
-      const response = await CategoryService.update(request);
+      const response = await CategoryService.update(request, req.user!.id);
       
       res.status(200).json({
         data: response,
@@ -32,10 +36,10 @@ export class CategoryController {
     }
   }
 
-  static async delete(req: Request, res: Response, next: NextFunction) {
+  static async delete(req: UserRequest, res: Response, next: NextFunction) {
     try {
       const categoryId = Number(req.params.categoryId);
-      const response = await CategoryService.delete(categoryId);
+      const response = await CategoryService.delete(categoryId, req.user!.id);
       
       res.status(200).json({
         data: response,
@@ -45,10 +49,10 @@ export class CategoryController {
     }
   }
 
-  static async get(req: Request, res: Response, next: NextFunction) {
+  static async get(req: UserRequest, res: Response, next: NextFunction) {
     try {
       const categoryId = Number(req.params.categoryId);
-      const response = await CategoryService.get(categoryId);
+      const response = await CategoryService.get(categoryId, req.user!.id);
       
       res.status(200).json({
         data: response,
@@ -58,9 +62,10 @@ export class CategoryController {
     }
   }
 
-  static async getAll(req: Request, res: Response, next: NextFunction) {
+  static async getAll(req: UserRequest, res: Response, next: NextFunction) {
     try {
-      const response = await CategoryService.getAll();
+      const userId = req.user!.id;
+      const response = await CategoryService.getAll(userId);
       
       res.status(200).json({
         data: response,
